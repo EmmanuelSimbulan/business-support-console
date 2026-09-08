@@ -4,7 +4,7 @@
 
 **Prepared by:** Emmanuel R. Simbulan
 
-**Status:** Demonstration build — not deployed, not connected to any live data source
+**Status:** Completed — deployed in https://emmanuelsimbulan.github.io/business-support-console/
 
 
 **Last updated:** September 2026
@@ -169,7 +169,7 @@ Where this prototype is honest about its limits: it does not simulate the harder
 2. Open it in any modern browser — no installation, server, or internet connection required after the initial font load
 3. To modify sample data, edit the arrays defined in the `<script>` section near the bottom of the file
 
-To view the hosted version instead of running it locally, see the GitHub Pages link in the repository description.
+To view the hosted version instead of running it locally, see the GitHub Pages link (https://emmanuelsimbulan.github.io/business-support-console/).
 
 ---
 
