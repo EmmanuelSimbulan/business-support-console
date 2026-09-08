@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Support Operations Console — Sample Build</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#1A1F1C;
+    --paper:#F0F2F0;
+    --panel:#FFFFFF;
+    --line:#D7DBD6;
+    --line-soft:#E6E9E5;
+    --muted:#5B625C;
+    --brass:#B8863B;
+    --brass-soft:#EFE3CC;
+    --good:#3B6E58;
+    --good-soft:#E1EBE5;
+    --risk:#A23B3B;
+    --risk-soft:#F3E1E1;
+    --warn:#9C7A2E;
+    --warn-soft:#EFE6CE;
+    --blue:#3E5C76;
+    --blue-soft:#E2E9EF;
+    --radius-sm:4px;
+    --radius-md:6px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-feature-settings:"tnum" 1;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:500;margin:0;}
+  ::selection{background:var(--brass-soft);}
+
+  .app{display:flex;min-height:100vh;}
+
+  /* ---------- Nav ---------- */
+  .nav{
+    width:250px;
+    flex-shrink:0;
+    background:var(--ink);
+    color:#EDEEEC;
+    display:flex;
+    flex-direction:column;
+    padding:28px 0 20px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .nav-brand{
+    padding:0 24px 22px;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+    margin-bottom:14px;
+  }
+  .nav-brand .mark{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:500;
+    letter-spacing:0.2px;
+    color:#F5F1E8;
+  }
+  .nav-brand .sub{
+    font-size:11.5px;
+    color:#9AA39C;
+    margin-top:5px;
+    line-height:1.45;
+  }
+  .nav-group-label{
+    padding:14px 24px 6px;
+    font-size:11px;
+    color:#7C857D;
+  }
+  .nav-list{list-style:none;margin:0;padding:0;}
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 24px;
+    font-size:13.5px;
+    color:#C4C9C2;
+    cursor:pointer;
+    border-left:2px solid transparent;
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.045);color:#EDEEEC;}
+  .nav-item.active{
+    color:#F5F1E8;
+    border-left-color:var(--brass);
+    background:rgba(184,134,59,0.10);
+  }
+  .nav-item .dot{
+    width:5px;height:5px;border-radius:50%;
+    background:currentColor;opacity:0.55;flex-shrink:0;
+  }
+  .nav-item.active .dot{opacity:1;background:var(--brass);}
+  .nav-foot{
+    margin-top:auto;
+    padding:16px 24px 0;
+    border-top:1px solid rgba(255,255,255,0.12);
+    font-size:11px;
+    color:#8A928A;
+    line-height:1.5;
+  }
+
+  /* ---------- Main ---------- */
+  .main{flex:1;min-width:0;}
+  .topbar{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:26px 40px 20px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  .topbar h1{font-size:22px;}
+  .topbar .tag{
+    font-size:11.5px;
+    color:var(--warn);
+    background:var(--warn-soft);
+    padding:5px 10px;
+    border-radius:var(--radius-sm);
+    font-weight:600;
+  }
+  .content{padding:28px 40px 70px;}
+  .section{display:none;}
+  .section.active{display:block;}
+
+  .lede{
+    color:var(--muted);
+    font-size:14px;
+    max-width:660px;
+    line-height:1.55;
+    margin-bottom:18px;
+  }
+
+  .maps-to{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-size:12px;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:6px 11px;
+    border-radius:var(--radius-sm);
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .maps-to b{color:var(--ink);font-weight:600;}
+
+  /* ---------- KPI tiles ---------- */
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-bottom:28px;
+  }
+  .kpi-row.compact{margin-bottom:24px;}
+  .kpi{
+    background:var(--panel);
+    padding:18px 20px 16px;
+    border-left:3px solid var(--brass);
+  }
+  .kpi:nth-child(2){border-left-color:var(--good);}
+  .kpi:nth-child(3){border-left-color:var(--risk);}
+  .kpi:nth-child(4){border-left-color:var(--warn);}
+  .kpi .num{font-family:'Fraunces',serif;font-size:28px;font-weight:500;}
+  .kpi .lbl{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .kpi .delta{font-size:11.5px;margin-top:8px;color:var(--good);}
+  .kpi .delta.neg{color:var(--risk);}
+
+  h2.section-title{font-size:18px;margin-bottom:4px;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    margin-bottom:26px;
+  }
+  .panel-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:16px 20px;
+    border-bottom:1px solid var(--line-soft);
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .panel-head h3{font-size:15px;}
+  .panel-head .meta{font-size:12px;color:var(--muted);}
+  .panel-body{padding:18px 20px 20px;}
+
+  .exec-summary{
+    font-size:13.5px;
+    line-height:1.7;
+    color:#2B322D;
+  }
+  .exec-summary b{font-weight:600;color:var(--ink);}
+
+  /* ---------- Table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;
+    font-weight:600;
+    font-size:11.5px;
+    color:var(--muted);
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:top;
+  }
+  tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:var(--radius-sm);
+    white-space:nowrap;
+  }
+  .b-done, .b-ontrack{background:var(--good-soft);color:var(--good);}
+  .b-progress, .b-atrisk{background:var(--brass-soft);color:var(--brass);}
+  .b-notstarted{background:var(--line-soft);color:var(--muted);}
+  .b-offtrack{background:var(--risk-soft);color:var(--risk);}
+  .p-urgent{color:var(--risk);font-weight:600;}
+  .p-important{color:var(--warn);font-weight:600;}
+  .p-medium{color:var(--muted);}
+  .p-low{color:var(--muted);}
+  .tag-pill{
+    display:inline-block;font-size:10.5px;font-weight:600;
+    padding:2px 7px;border-radius:10px;margin:0 3px 3px 0;
+    background:var(--blue-soft);color:var(--blue);
+  }
+
+  .filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .chip{
+    font-size:12px;
+    padding:6px 13px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:var(--panel);
+    color:var(--muted);
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .chip:hover{border-color:var(--brass);color:var(--ink);}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#F5F1E8;}
+
+  /* ---------- Goals ---------- */
+  .goal-row{display:flex;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid var(--line-soft);}
+  .goal-row:last-child{border-bottom:none;}
+  .goal-name{width:250px;flex-shrink:0;font-size:13px;}
+  .goal-bar-track{flex:1;height:7px;background:var(--line-soft);border-radius:4px;overflow:hidden;}
+  .goal-bar-fill{height:100%;background:var(--brass);border-radius:4px;}
+  .goal-pct{width:42px;text-align:right;font-size:12.5px;color:var(--muted);font-weight:600;}
+
+  /* ---------- Bar chart (reusable) ---------- */
+  .chart-bars{display:flex;align-items:flex-end;gap:20px;height:190px;padding:10px 6px 0;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
+  .bar-shape{
+    width:100%;
+    max-width:52px;
+    background:linear-gradient(180deg, var(--brass) 0%, #C79A4E 100%);
+    border-radius:3px 3px 0 0;
+    height:0;
+    transition:height 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .bar-shape.blue{background:linear-gradient(180deg, var(--blue) 0%, #4E6E8C 100%);}
+  .bar-col .bar-val{font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .bar-col .bar-lbl{font-size:11.5px;color:var(--muted);margin-top:8px;text-align:center;}
+
+  /* ---------- Sparkline ---------- */
+  .spark-wrap{padding:6px 0 0;}
+  .spark-caption{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px;}
+
+  /* ---------- RAID ---------- */
+  .raid-row{
+    display:grid;
+    grid-template-columns:2.1fr 0.8fr 0.8fr 1fr 1.1fr 1fr;
+    gap:14px;
+    padding:14px 0;
+    border-bottom:1px solid var(--line-soft);
+    border-left:3px solid var(--line);
+    padding-left:14px;
+    align-items:start;
+  }
+  .raid-row.risk-high{border-left-color:var(--risk);}
+  .raid-row.risk-med{border-left-color:var(--warn);}
+  .raid-row.risk-low{border-left-color:var(--good);}
+  .raid-row:last-child{border-bottom:none;}
+  .raid-title{font-size:13px;font-weight:500;}
+  .raid-label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:2px;}
+  .raid-val{font-size:12.5px;}
+
+  /* ---------- Timeline ---------- */
+  .timeline{position:relative;padding-left:26px;}
+  .timeline::before{
+    content:'';position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:var(--line);
+  }
+  .tl-item{position:relative;padding-bottom:24px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{
+    content:'';position:absolute;left:-26px;top:3px;width:9px;height:9px;border-radius:50%;
+    background:var(--panel);border:2px solid var(--brass);
+  }
+  .tl-item.done::before{background:var(--brass);}
+  .tl-date{font-size:11.5px;color:var(--muted);margin-bottom:3px;}
+  .tl-title{font-size:13.5px;font-weight:600;margin-bottom:3px;}
+  .tl-desc{font-size:12.5px;color:var(--muted);line-height:1.5;}
+
+  .before-after{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}
+  .ba-col{background:var(--panel);padding:20px;}
+  .ba-col h4{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 12px;}
+  .ba-metric{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px;gap:14px;}
+  .ba-metric:last-child{border-bottom:none;}
+  .ba-metric .v{font-weight:600;text-align:right;}
+  .ba-col.after .v{color:var(--good);}
+
+  /* ---------- RACI ---------- */
+  .raci-legend{display:flex;gap:18px;margin-bottom:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+  .raci-legend b{color:var(--ink);}
+  table.raci th, table.raci td{text-align:center;}
+  table.raci td:first-child, table.raci th:first-child{text-align:left;}
+  .raci-cell{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;
+    font-size:11px;font-weight:700;
+  }
+  .raci-R{background:var(--ink);color:#F5F1E8;}
+  .raci-A{background:var(--brass);color:#fff;}
+  .raci-C{background:var(--blue-soft);color:var(--blue);}
+  .raci-I{background:var(--line-soft);color:var(--muted);}
+
+  /* ---------- Gantt-ish phase bars ---------- */
+  .gantt{margin-top:6px;}
+  .gantt-weeks{
+    display:grid;grid-template-columns:170px repeat(8,1fr);
+    font-size:10.5px;color:var(--muted);margin-bottom:6px;
+  }
+  .gantt-weeks span{text-align:center;}
+  .gantt-row{display:grid;grid-template-columns:170px repeat(8,1fr);align-items:center;gap:0;margin-bottom:10px;}
+  .gantt-label{font-size:12.5px;padding-right:10px;}
+  .gantt-label .team{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .gantt-track{grid-column:span 8;position:relative;height:20px;background:var(--line-soft);border-radius:3px;}
+  .gantt-bar{
+    position:absolute;top:0;height:100%;border-radius:3px;
+    background:var(--brass);
+  }
+  .gantt-bar.blue{background:var(--blue);}
+  .gantt-bar.green{background:var(--good);}
+  .gantt-bar.ink{background:var(--ink);}
+
+  /* ---------- Coordination log ---------- */
+  .log-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+  .log-item:last-child{border-bottom:none;}
+  .log-date{width:70px;flex-shrink:0;font-size:11.5px;color:var(--muted);}
+  .log-body .who{font-size:12.5px;font-weight:600;margin-bottom:2px;}
+  .log-body .what{font-size:12.5px;color:#2B322D;line-height:1.5;}
+
+  /* ---------- Occupancy grid ---------- */
+  .occ-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;max-width:420px;}
+  .occ-seat{aspect-ratio:1;border-radius:3px;}
+  .occ-seat.occupied{background:var(--blue);}
+  .occ-seat.reserved{background:var(--brass-soft);border:1px solid var(--brass);}
+  .occ-seat.vacant{background:var(--line-soft);}
+  .occ-legend{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--muted);align-items:center;flex-wrap:wrap;}
+  .occ-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .occ-swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+
+  footer.note{
+    margin-top:8px;
+    font-size:11.5px;
+    color:var(--muted);
+    border-top:1px solid var(--line);
+    padding-top:16px;
+  }
+
+  @media (max-width:960px){
+    .nav{position:relative;height:auto;width:100%;}
+    .app{flex-direction:column;}
+    .kpi-row{grid-template-columns:1fr 1fr;}
+    .raid-row{grid-template-columns:1fr;gap:4px;}
+    .gantt-weeks, .gantt-row{grid-template-columns:120px repeat(8,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="mark">Business Support Console</div>
+      <div class="sub">Sample build · synthetic data<br>Prepared by Emmanuel Simbulan</div>
+    </div>
+
+    <div class="nav-group-label">Executive view</div>
+    <ul class="nav-list">
+      <li class="nav-item active" data-target="overview"><span class="dot"></span>Overview & scorecard</li>
+    </ul>
+
+    <div class="nav-group-label">Workspace & operations</div>
+    <ul class="nav-list">
+      <li class="nav-item" data-target="workspace"><span class="dot"></span>Workspace & occupancy</li>
+      <li class="nav-item" data-target="coordination"><span class="dot"></span>Stakeholder coordination</li>
+      <li class="nav-item" data-target="tasks"><span class="dot"></span>Task planner</li>
+    </ul>
+
+    <div class="nav-group-label">Insights & governance</div>
+    <ul class="nav-list">
+      <li class="nav-item" data-target="reporting"><span class="dot"></span>Reporting & analytics</li>
+      <li class="nav-item" data-target="risk"><span class="dot"></span>Risk register</li>
+      <li class="nav-item" data-target="improve"><span class="dot"></span>Process improvement</li>
+    </ul>
+
+    <div class="nav-foot">
+      All names, tasks, and figures on this page are fictional, built to demonstrate a Business Support workflow — not production data from any employer.
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="topbar">
+      <h1 id="page-title">Overview & scorecard</h1>
+      <span class="tag">Sample data</span>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ OVERVIEW ============ -->
+      <section class="section active" id="overview">
+        <p class="lede">A monthly business review scorecard — the format I'd bring to a leadership update: headline numbers, initiative status, and a short narrative that leads with the decision, not the data.</p>
+        <div class="maps-to"><b>Maps to JD:</b> executive-ready presentations & scorecards · business updates</div>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="num">71%</div>
+            <div class="lbl">Average floor occupancy, monitored sites</div>
+            <div class="delta">▲ 4 pts vs. last month</div>
+          </div>
+          <div class="kpi">
+            <div class="num">5 / 7</div>
+            <div class="lbl">Site & process initiatives on track</div>
+            <div class="delta neg">2 at risk — see scorecard</div>
+          </div>
+          <div class="kpi">
+            <div class="num">87%</div>
+            <div class="lbl">Tasks closed on time, last 30 days</div>
+            <div class="delta">▲ 6 pts vs. prior month</div>
+          </div>
+          <div class="kpi">
+            <div class="num">2</div>
+            <div class="lbl">Open risks requiring leadership visibility</div>
+            <div class="delta neg">1 new this week</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Executive summary</h3><span class="meta">Week of Sep 8</span></div>
+          <div class="panel-body exec-summary">
+            Site initiatives are tracking to plan overall, with the <b>Floor 14 reconfiguration</b> now the primary watch item due to a build-out sequencing dependency with Facilities — detail and mitigation on the Stakeholder Coordination view. Occupancy has stabilized at 71% across monitored floors, though Tuesday–Thursday demand continues to exceed capacity on two floors, which is the more likely driver of ongoing space complaints than raw seat count. Reconciliation exception rate keeps trending down following the validation rules introduced in August, and the documentation standardization initiative is substantially complete. No items require escalation beyond what's already flagged below.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Initiative scorecard</h3><span class="meta">RAG status, this cycle</span></div>
+          <div class="panel-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Initiative</th><th>Type</th><th>Owner</th><th>Status</th><th>Target</th></tr></thead>
+              <tbody id="scorecard-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Goal progress</h3><span class="meta">This quarter</span></div>
+          <div class="panel-body" id="goals-body"></div>
+        </div>
+
+        <footer class="note">
+          In practice this view would be built as a PowerPoint scorecard or a Power BI page refreshed on a fixed cadence — shown here as a live page so the underlying data and logic are visible.
+        </footer>
+      </section>
+
+      <!-- ============ WORKSPACE & OCCUPANCY ============ -->
+      <section class="section" id="workspace">
+        <p class="lede">The same reporting discipline as any operational metric — data collection, validation, and a recommendation — applied to physical space instead of a system or process.</p>
+        <div class="maps-to"><b>Maps to JD:</b> workspace planning · seating allocation · occupancy reporting · site initiatives</div>
+
+        <div class="kpi-row compact">
+          <div class="kpi">
+            <div class="num">71%</div>
+            <div class="lbl">Overall occupancy, monitored floors</div>
+          </div>
+          <div class="kpi">
+            <div class="num">93%</div>
+            <div class="lbl">Peak-day utilization (Wed)</div>
+          </div>
+          <div class="kpi">
+            <div class="num">340 / 480</div>
+            <div class="lbl">Seats occupied vs. available, Floor 12</div>
+          </div>
+          <div class="kpi">
+            <div class="num">3</div>
+            <div class="lbl">Active site initiatives</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Occupancy by floor</h3><span class="meta">Sample snapshot, weekday average</span></div>
+          <div class="panel-body">
+            <div class="chart-bars" id="floor-chart"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Occupancy by day of week</h3><span class="meta">Floor 12, 4-week average</span></div>
+          <div class="panel-body">
+            <div class="chart-bars" id="dow-chart"></div>
+            <p style="font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.6;">
+              Reading: average occupancy looks moderate, but demand clusters Tuesday–Thursday. The fix worth proposing is staggered anchor days or bookable desks, not more square footage — the case I'd walk through if asked how I'd approach a capacity complaint.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Seat map — Floor 12, sample section</h3><span class="meta">Wednesday, 10:00 AM snapshot</span></div>
+          <div class="panel-body">
+            <div class="occ-grid" id="seat-map"></div>
+            <div class="occ-legend">
+              <span><span class="occ-swatch" style="background:var(--blue);"></span>Occupied</span>
+              <span><span class="occ-swatch" style="background:var(--brass-soft);border:1px solid var(--brass);"></span>Reserved</span>
+              <span><span class="occ-swatch" style="background:var(--line-soft);"></span>Vacant</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Site initiatives</h3><span class="meta">Active and planned</span></div>
+          <div class="panel-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Initiative</th><th>Floor</th><th>Stakeholders</th><th>Status</th><th>Target date</th></tr></thead>
+              <tbody id="site-init-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STAKEHOLDER COORDINATION ============ -->
+      <section class="section" id="coordination">
+        <p class="lede">One representative initiative, shown end to end — who owns what, in what order, and how status actually gets communicated across teams that don't report to me.</p>
+        <div class="maps-to"><b>Maps to JD:</b> coordinate with Real Estate, Facilities, and Technology · stakeholder partnership</div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Floor 14 reconfiguration — Q4 site initiative</h3>
+            <span class="badge b-atrisk">At risk</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 18px;">
+              Consolidating two under-utilized teams onto Floor 14 to free capacity on Floor 12. Business Support owns coordination end to end; no single team here reports to another.
+            </p>
+
+            <h4 style="font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:10px;">Responsibility by workstream</h4>
+            <div class="raci-legend">
+              <span><span class="raci-cell raci-R" style="width:18px;height:18px;font-size:9px;">R</span> Responsible</span>
+              <span><span class="raci-cell raci-A" style="width:18px;height:18px;font-size:9px;">A</span> Accountable</span>
+              <span><span class="raci-cell raci-C" style="width:18px;height:18px;font-size:9px;">C</span> Consulted</span>
+              <span><span class="raci-cell raci-I" style="width:18px;height:18px;font-size:9px;">I</span> Informed</span>
+            </div>
+            <table class="raci" style="margin-bottom:22px;">
+              <thead><tr><th>Workstream</th><th>Real Estate</th><th>Facilities</th><th>Technology</th><th>Business Support</th><th>Leadership</th></tr></thead>
+              <tbody id="raci-tbody"></tbody>
+            </table>
+
+            <h4 style="font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:10px;">Phase timeline</h4>
+            <div class="gantt" id="gantt"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Coordination log</h3><span class="meta">Recent status touchpoints</span></div>
+          <div class="panel-body" id="log-body" style="padding-top:6px;"></div>
+        </div>
+      </section>
+
+      <!-- ============ TASKS ============ -->
+      <section class="section" id="tasks">
+        <p class="lede">Every task carries an owner, a priority, and a linked goal or initiative — the same structure I use to keep cross-functional work visible without needing to ask around for status.</p>
+        <div class="maps-to"><b>Maps to JD:</b> managing multiple priorities independently · project coordination</div>
+
+        <div class="filters">
+          <span class="chip active" data-filter="all">All</span>
+          <span class="chip" data-filter="Not started">Not started</span>
+          <span class="chip" data-filter="In progress">In progress</span>
+          <span class="chip" data-filter="Done">Done</span>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body" style="padding:0;">
+            <table id="task-table">
+              <thead>
+                <tr><th>Task</th><th>Owner</th><th>Priority</th><th>Status</th><th>Due</th><th>Linked to</th></tr>
+              </thead>
+              <tbody id="task-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ REPORTING ============ -->
+      <section class="section" id="reporting">
+        <p class="lede">Turning operational data into something a leader can act on — the same reporting muscle regardless of whether the input is task volume, staffing hours, or desk occupancy.</p>
+        <div class="maps-to"><b>Maps to JD:</b> data analysis & reporting · Excel · Power BI / Tableau</div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Task volume by function</h3>
+            <span class="meta">Current cycle, sample counts</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart-bars" id="bar-chart"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>On-time completion rate</h3>
+            <span class="meta">8-week trend, sample data</span>
+          </div>
+          <div class="panel-body">
+            <div class="spark-wrap">
+              <svg id="spark-chart" width="100%" height="140" viewBox="0 0 640 140" preserveAspectRatio="none"></svg>
+              <div class="spark-caption" id="spark-caption"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Status × priority summary</h3>
+            <span class="meta">Pivot-style view</span>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <table id="pivot-table"></table>
+          </div>
+          <div class="panel-body" style="padding-top:0;">
+            <p style="font-size:12px;color:var(--muted);margin:0;">Built here in HTML for the demo; day to day I'd produce this same cut as an Excel PivotTable for a working review, or a Power BI / Tableau view for a recurring stakeholder dashboard, depending on refresh needs and audience.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RISK ============ -->
+      <section class="section" id="risk">
+        <p class="lede">Risks get named early, with a recommendation attached — not surfaced for the first time when something has already gone wrong.</p>
+        <div class="maps-to"><b>Maps to JD:</b> identify risks · track progress on business initiatives</div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Risk register</h3><span class="meta">Active items</span></div>
+          <div class="panel-body" id="raid-body" style="padding-top:6px;"></div>
+        </div>
+      </section>
+
+      <!-- ============ IMPROVEMENT ============ -->
+      <section class="section" id="improve">
+        <p class="lede">A generalized version of a documentation standardization initiative I led — the pattern, not the original files.</p>
+        <div class="maps-to"><b>Maps to JD:</b> process improvement · transformation initiatives · continuous improvement mindset</div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Initiative timeline</h3><span class="meta">Sample project</span></div>
+          <div class="panel-body">
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Before / after</h3><span class="meta">Illustrative figures</span></div>
+          <div class="panel-body" style="padding:0;">
+            <div class="before-after">
+              <div class="ba-col before">
+                <h4>Before</h4>
+                <div class="ba-metric"><span>Source of truth</span><span class="v">Scattered across 6 folders</span></div>
+                <div class="ba-metric"><span>Avg. time to find current version</span><span class="v">~25 min</span></div>
+                <div class="ba-metric"><span>Version control</span><span class="v">Manual, inconsistent</span></div>
+                <div class="ba-metric"><span>New-hire ramp on docs</span><span class="v">~3 weeks</span></div>
+              </div>
+              <div class="ba-col after">
+                <h4>After</h4>
+                <div class="ba-metric"><span>Source of truth</span><span class="v">One structured workspace</span></div>
+                <div class="ba-metric"><span>Avg. time to find current version</span><span class="v">&lt; 2 min</span></div>
+                <div class="ba-metric"><span>Version control</span><span class="v">Standardized, enforced</span></div>
+                <div class="ba-metric"><span>New-hire ramp on docs</span><span class="v">~4 days</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  // ---------- Nav switching ----------
+  const navItems = document.querySelectorAll('.nav-item');
+  const sections = document.querySelectorAll('.section');
+  const pageTitle = document.getElementById('page-title');
+  const titles = {
+    overview:'Overview & scorecard', workspace:'Workspace & occupancy', coordination:'Stakeholder coordination',
+    tasks:'Task planner', reporting:'Reporting & analytics', risk:'Risk register', improve:'Process improvement'
+  };
+  navItems.forEach(item=>{
+    item.addEventListener('click', ()=>{
+      navItems.forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      const target = item.dataset.target;
+      sections.forEach(s=>s.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+      pageTitle.textContent = titles[target];
+      if(target==='reporting'){ requestAnimationFrame(renderBars); }
+      if(target==='workspace'){ requestAnimationFrame(renderWorkspaceCharts); }
+    });
+  });
+
+  // ---------- Overview: scorecard ----------
+  const scorecard = [
+    {name:'Floor 14 reconfiguration', type:'Site initiative', owner:'Business Support', status:'At risk', target:'Nov 14'},
+    {name:'Hybrid work — bookable desk pilot', type:'Site initiative', owner:'Facilities', status:'On track', target:'Oct 03'},
+    {name:'Documentation standardization', type:'Process improvement', owner:'Business Support', status:'On track', target:'Sep 26'},
+    {name:'Reconciliation exception reduction', type:'Process improvement', owner:'Accounting', status:'On track', target:'Oct 15'},
+    {name:'Stakeholder scorecard automation', type:'Reporting', owner:'Business Support', status:'On track', target:'Oct 20'},
+    {name:'Access control audit — shared workspace', type:'Governance', owner:'Technology', status:'Off track', target:'Sep 12'},
+    {name:'New vendor onboarding SOP', type:'Process improvement', owner:'Accounting', status:'On track', target:'Sep 19'},
+  ];
+  const ragClass = {'On track':'b-ontrack','At risk':'b-atrisk','Off track':'b-offtrack'};
+  document.getElementById('scorecard-tbody').innerHTML = scorecard.map(s=>`
+    <tr>
+      <td>${s.name}</td>
+      <td style="color:var(--muted);">${s.type}</td>
+      <td>${s.owner}</td>
+      <td><span class="badge ${ragClass[s.status]}">${s.status}</span></td>
+      <td>${s.target}</td>
+    </tr>
+  `).join('');
+
+  const goals = [
+    {name:'Standardize monthly close reporting', pct:82},
+    {name:'Reduce reconciliation exceptions', pct:64},
+    {name:'Consolidate documentation into one source of truth', pct:91},
+    {name:'Deliver Floor 14 reconfiguration', pct:48},
+  ];
+  document.getElementById('goals-body').innerHTML = goals.map(g=>`
+    <div class="goal-row">
+      <div class="goal-name">${g.name}</div>
+      <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${g.pct}%"></div></div>
+      <div class="goal-pct">${g.pct}%</div>
+    </div>
+  `).join('');
+
+  // ---------- Workspace: site initiatives ----------
+  const siteInit = [
+    {name:'Floor 14 reconfiguration', floor:'14', tags:['Real Estate','Facilities','Technology'], status:'At risk', target:'Nov 14'},
+    {name:'Hybrid work — bookable desk pilot', floor:'12', tags:['Facilities','Technology'], status:'On track', target:'Oct 03'},
+    {name:'Collaboration zone build-out', floor:'10', tags:['Real Estate','Facilities'], status:'On track', target:'Dec 01'},
+  ];
+  document.getElementById('site-init-tbody').innerHTML = siteInit.map(s=>`
+    <tr>
+      <td>${s.name}</td>
+      <td>${s.floor}</td>
+      <td>${s.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('')}</td>
+      <td><span class="badge ${ragClass[s.status]}">${s.status}</span></td>
+      <td>${s.target}</td>
+    </tr>
+  `).join('');
+
+  // ---------- Workspace: seat map ----------
+  const seatMapEl = document.getElementById('seat-map');
+  const seatStates = ['occupied','occupied','vacant','reserved','occupied','occupied','vacant','occupied','reserved','occupied',
+                       'occupied','vacant','occupied','occupied','vacant','occupied','occupied','reserved','occupied','vacant',
+                       'vacant','occupied','occupied','vacant','occupied','vacant','occupied','occupied','vacant','occupied',
+                       'occupied','occupied','reserved','occupied','vacant','occupied','occupied','vacant','occupied','occupied'];
+  seatMapEl.innerHTML = seatStates.map(s=>`<div class="occ-seat ${s}"></div>`).join('');
+
+  // ---------- Coordination: RACI ----------
+  const raci = [
+    {ws:'Space planning & layout design', re:'A', fac:'R', tech:'C', bs:'R', lead:'I'},
+    {ws:'Build-out & fit-out', re:'C', fac:'A', tech:'I', bs:'R', lead:'I'},
+    {ws:'Network & AV setup', re:'I', fac:'C', tech:'A', bs:'R', lead:'I'},
+    {ws:'Occupant communications', re:'I', fac:'I', tech:'I', bs:'A', lead:'C'},
+    {ws:'Go-live sign-off', re:'C', fac:'C', tech:'C', bs:'R', lead:'A'},
+  ];
+  function raciCell(v){ return `<span class="raci-cell raci-${v}">${v}</span>`; }
+  document.getElementById('raci-tbody').innerHTML = raci.map(r=>`
+    <tr>
+      <td>${r.ws}</td>
+      <td>${raciCell(r.re)}</td>
+      <td>${raciCell(r.fac)}</td>
+      <td>${raciCell(r.tech)}</td>
+      <td>${raciCell(r.bs)}</td>
+      <td>${raciCell(r.lead)}</td>
+    </tr>
+  `).join('');
+
+  // ---------- Coordination: Gantt ----------
+  const phases = [
+    {label:'Space planning & design', team:'Real Estate', start:1, end:2, color:''},
+    {label:'Build-out & fit-out', team:'Facilities', start:2, end:6, color:'green'},
+    {label:'Network & AV setup', team:'Technology', start:5, end:7, color:'blue'},
+    {label:'Move & occupant comms', team:'Business Support', start:7, end:8, color:'ink'},
+  ];
+  const gantt = document.getElementById('gantt');
+  let weekHeader = '<div class="gantt-weeks"><span></span>' + Array.from({length:8},(_,i)=>`<span>Wk ${i+1}</span>`).join('') + '</div>';
+  let rows = phases.map(p=>{
+    const span = p.end - p.start + 1;
+    return `<div class="gantt-row">
+      <div class="gantt-label">${p.label}<span class="team">${p.team}</span></div>
+      <div class="gantt-track" style="grid-column: 2 / span 8;">
+        <div class="gantt-bar ${p.color}" style="left:${(p.start-1)/8*100}%; width:${span/8*100}%;"></div>
+      </div>
+    </div>`;
+  }).join('');
+  gantt.innerHTML = weekHeader + rows;
+
+  // ---------- Coordination log ----------
+  const log = [
+    {date:'Sep 08', who:'Business Support → Facilities, Technology', what:'Flagged build-out sequencing risk on Floor 14; requested revised timeline by Sep 10.'},
+    {date:'Sep 03', who:'Real Estate → Business Support', what:'Confirmed final floor layout; two workstations moved to accommodate accessibility request.'},
+    {date:'Aug 28', who:'Business Support → Leadership', what:'Sent monthly site initiative scorecard ahead of the business review — no items required discussion.'},
+    {date:'Aug 22', who:'Technology → Business Support', what:'Confirmed network drop locations; AV install to follow after fit-out per phase plan.'},
+  ];
+  document.getElementById('log-body').innerHTML = log.map(l=>`
+    <div class="log-item">
+      <div class="log-date">${l.date}</div>
+      <div class="log-body"><div class="who">${l.who}</div><div class="what">${l.what}</div></div>
+    </div>
+  `).join('');
+
+  // ---------- Task data ----------
+  const tasks = [
+    {name:'Reconcile Q3 vendor statements', owner:'Accounting', priority:'Urgent', status:'In progress', due:'Sep 12', link:'Reduce reconciliation exceptions'},
+    {name:'Draft monthly close scorecard template', owner:'Business Support', priority:'Important', status:'Done', due:'Sep 05', link:'Standardize monthly close reporting'},
+    {name:'Coordinate desk audit for Floor 14', owner:'Real Estate', priority:'Urgent', status:'In progress', due:'Sep 11', link:'Floor 14 reconfiguration'},
+    {name:'Migrate legacy SOPs into shared workspace', owner:'Business Support', priority:'Important', status:'In progress', due:'Sep 18', link:'Consolidate documentation'},
+    {name:'Validate automated batch import rules', owner:'Technology', priority:'Urgent', status:'Not started', due:'Sep 10', link:'Reduce reconciliation exceptions'},
+    {name:'Confirm AV install schedule', owner:'Technology', priority:'Important', status:'Not started', due:'Sep 24', link:'Floor 14 reconfiguration'},
+    {name:'Build stakeholder scorecard automation', owner:'Business Support', priority:'Medium', status:'In progress', due:'Sep 25', link:'Stakeholder scorecard automation'},
+    {name:'Facilitate cross-team requirements workshop', owner:'Leadership', priority:'Important', status:'Done', due:'Sep 03', link:'Standardize monthly close reporting'},
+    {name:'Update floor plan schematics', owner:'Facilities', priority:'Medium', status:'In progress', due:'Sep 14', link:'Floor 14 reconfiguration'},
+    {name:'Archive superseded documentation versions', owner:'Business Support', priority:'Low', status:'Done', due:'Aug 29', link:'Consolidate documentation'},
+    {name:'UAT: new expense-approval workflow', owner:'Technology', priority:'Urgent', status:'In progress', due:'Sep 15', link:'Reduce reconciliation exceptions'},
+    {name:'Prepare leadership business review deck', owner:'Business Support', priority:'Important', status:'Not started', due:'Sep 22', link:'Overview scorecard'},
+    {name:'Audit access controls on shared workspace', owner:'Technology', priority:'Urgent', status:'Not started', due:'Sep 12', link:'Access control audit'},
+    {name:'Draft SOP for new vendor onboarding', owner:'Accounting', priority:'Medium', status:'In progress', due:'Sep 19', link:'New vendor onboarding SOP'},
+    {name:'Weekly reconciliation exception review', owner:'Accounting', priority:'Low', status:'Done', due:'Sep 06', link:'Reduce reconciliation exceptions'},
+    {name:'Send occupant move-in communications', owner:'Business Support', priority:'Medium', status:'Not started', due:'Nov 10', link:'Floor 14 reconfiguration'},
+  ];
+
+  const statusClass = {'Done':'b-done','In progress':'b-progress','Not started':'b-notstarted'};
+  const priorityClass = {'Urgent':'p-urgent','Important':'p-important','Medium':'p-medium','Low':'p-low'};
+
+  function renderTasks(filter){
+    const tbody = document.getElementById('task-tbody');
+    tbody.innerHTML = '';
+    tasks.filter(t=> filter==='all' || t.status===filter).forEach(t=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${t.name}</td>
+        <td>${t.owner}</td>
+        <td class="${priorityClass[t.priority]}">${t.priority}</td>
+        <td><span class="badge ${statusClass[t.status]}">${t.status}</span></td>
+        <td>${t.due}</td>
+        <td style="color:var(--muted);font-size:12.5px;">${t.link}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+  renderTasks('all');
+
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      renderTasks(chip.dataset.filter);
+    });
+  });
+
+  // ---------- Reporting: bar chart ----------
+  const barData = [
+    {label:'Accounting', value:14},
+    {label:'Business Support', value:22},
+    {label:'Technology', value:13},
+    {label:'Facilities', value:8},
+    {label:'Real Estate', value:6},
+    {label:'Leadership', value:5},
+  ];
+  function makeBars(containerId, data, colorClass){
+    const el = document.getElementById(containerId);
+    if(!el || el.dataset.rendered) return;
+    el.dataset.rendered = '1';
+    const max = Math.max(...data.map(d=>d.value));
+    el.innerHTML = data.map(d=>`
+      <div class="bar-col">
+        <div class="bar-val">${d.value}${d.suffix||''}</div>
+        <div class="bar-shape ${colorClass||''}" data-h="${(d.value/max*100).toFixed(0)}"></div>
+        <div class="bar-lbl">${d.label}</div>
+      </div>
+    `).join('');
+    requestAnimationFrame(()=>{
+      el.querySelectorAll('.bar-shape').forEach(b=>{ b.style.height = b.dataset.h + '%'; });
+    });
+  }
+  function renderBars(){ makeBars('bar-chart', barData, ''); }
+
+  const floorData = [
+    {label:'Floor 8', value:64, suffix:'%'},
+    {label:'Floor 10', value:78, suffix:'%'},
+    {label:'Floor 12', value:71, suffix:'%'},
+    {label:'Floor 14', value:52, suffix:'%'},
+  ];
+  const dowData = [
+    {label:'Mon', value:58, suffix:'%'},
+    {label:'Tue', value:81, suffix:'%'},
+    {label:'Wed', value:93, suffix:'%'},
+    {label:'Thu', value:85, suffix:'%'},
+    {label:'Fri', value:41, suffix:'%'},
+  ];
+  function renderWorkspaceCharts(){
+    makeBars('floor-chart', floorData, 'blue');
+    makeBars('dow-chart', dowData, '');
+  }
+  // pre-render if workspace is first viewed
+  renderWorkspaceCharts();
+
+  // ---------- Sparkline ----------
+  const weeks = ['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7','Wk8'];
+  const rates = [74,78,81,79,85,83,87,87];
+  function renderSpark(){
+    const svg = document.getElementById('spark-chart');
+    const w = 640, h = 140, pad = 10;
+    const min = 65, max = 95;
+    const pts = rates.map((r,i)=>{
+      const x = pad + (i/(rates.length-1))*(w-2*pad);
+      const y = h - pad - ((r-min)/(max-min))*(h-2*pad);
+      return [x,y];
+    });
+    const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const area = path + ` L${pts[pts.length-1][0]},${h-pad} L${pts[0][0]},${h-pad} Z`;
+    svg.innerHTML = `
+      <path d="${area}" fill="#B8863B" opacity="0.10"></path>
+      <path d="${path}" fill="none" stroke="#B8863B" stroke-width="2"></path>
+      ${pts.map((p)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.2" fill="#B8863B"></circle>`).join('')}
+    `;
+    document.getElementById('spark-caption').innerHTML = weeks.map(w=>`<span>${w}</span>`).join('');
+  }
+  renderSpark();
+
+  // ---------- Pivot table ----------
+  const statuses = ['Not started','In progress','Done'];
+  const priorities = ['Urgent','Important','Medium','Low'];
+  function pivotCount(status, priority){
+    return tasks.filter(t=>t.status===status && t.priority===priority).length;
+  }
+  let pivotHtml = '<thead><tr><th>Status \\ Priority</th>' + priorities.map(p=>`<th>${p}</th>`).join('') + '<th>Total</th></tr></thead><tbody>';
+  statuses.forEach(s=>{
+    let rowTotal = 0;
+    let cells = priorities.map(p=>{ const c = pivotCount(s,p); rowTotal += c; return `<td>${c}</td>`; }).join('');
+    pivotHtml += `<tr><td>${s}</td>${cells}<td style="font-weight:600;">${rowTotal}</td></tr>`;
+  });
+  let colTotals = priorities.map(p=> tasks.filter(t=>t.priority===p).length );
+  pivotHtml += `<tr><td style="font-weight:600;">Total</td>${colTotals.map(c=>`<td style="font-weight:600;">${c}</td>`).join('')}<td style="font-weight:600;">${tasks.length}</td></tr>`;
+  pivotHtml += '</tbody>';
+  document.getElementById('pivot-table').innerHTML = pivotHtml;
+
+  // ---------- RAID ----------
+  const raid = [
+    {title:'Floor 14 build-out sequencing may miss Nov 14 target', impact:'High', likelihood:'Medium', owner:'Facilities', related:'Floor 14 reconfiguration', status:'Mitigating', level:'risk-high'},
+    {title:'Vendor data feed delay could push month-end close', impact:'High', likelihood:'Medium', owner:'Technology', related:'Reconciliation exceptions', status:'Mitigating', level:'risk-high'},
+    {title:'Reconciliation process depends on one team member', impact:'Medium', likelihood:'Medium', owner:'Accounting', related:'Reconciliation exceptions', status:'Plan in progress', level:'risk-med'},
+    {title:'Access control audit blocked pending approval', impact:'Low', likelihood:'High', owner:'Technology', related:'Governance', status:'Escalated', level:'risk-med'},
+    {title:'New workflow assumes stable API uptime from finance system', impact:'Medium', likelihood:'Low', owner:'Technology', related:'Reconciliation exceptions', status:'Monitoring', level:'risk-low'},
+  ];
+  document.getElementById('raid-body').innerHTML = raid.map(r=>`
+    <div class="raid-row ${r.level}">
+      <div class="raid-title">${r.title}</div>
+      <div><span class="raid-label">Impact</span><span class="raid-val">${r.impact}</span></div>
+      <div><span class="raid-label">Likelihood</span><span class="raid-val">${r.likelihood}</span></div>
+      <div><span class="raid-label">Owner</span><span class="raid-val">${r.owner}</span></div>
+      <div><span class="raid-label">Linked to</span><span class="raid-val">${r.related}</span></div>
+      <div><span class="raid-label">Status</span><span class="raid-val">${r.status}</span></div>
+    </div>
+  `).join('');
+
+  // ---------- Timeline ----------
+  const timeline = [
+    {date:'Week 1', title:'Audit existing documentation', desc:'Cataloged where every document actually lived and who used it.', done:true},
+    {date:'Week 2', title:'Design the standard structure', desc:'Defined folder logic, naming convention, and version-control rule.', done:true},
+    {date:'Weeks 3–5', title:'Migrate and restructure', desc:'Moved documents into the new structure without breaking active references.', done:true},
+    {date:'Week 6', title:'Team walkthrough and adoption', desc:'Trained the teams touching these documents on the new standard.', done:true},
+    {date:'Ongoing', title:'Maintain and enforce', desc:'New documents follow the standard by default; structure holds without me.', done:false},
+  ];
+  document.getElementById('timeline').innerHTML = timeline.map(t=>`
+    <div class="tl-item ${t.done?'done':''}">
+      <div class="tl-date">${t.date}</div>
+      <div class="tl-title">${t.title}</div>
+      <div class="tl-desc">${t.desc}</div>
+    </div>
+  `).join('');
+</script>
+
+</body>
+</html>
