@@ -107,6 +107,8 @@ A filterable register of active work items, each with an owner, priority, status
 **5.5 Reporting & Analytics**
 Task-volume and completion-rate visualizations, plus a pivot-style summary table. This module includes an explicit note that, in a real deployment, this same view would be produced in Excel (PivotTables) or Power BI / Tableau depending on the audience and refresh cadence — the in-browser charts here are a stand-in for those tools, not a proposed replacement for them.
 
+This module also links to a Python companion script (`analysis/reporting_analysis.py`) that derives the same rollups — plus a couple this page doesn't show, like an overdue-item flag — from the identical sample data using pandas, renders the charts with matplotlib, and exports a formatted Excel workbook. See §7.1 below.
+
 **5.6 Risk Register**
 A RAID-style (Risks, Assumptions, Issues, Dependencies) log, with each entry linked to the initiative it threatens, an owner, and a current status, so a risk is never just a description without accountability attached.
 
@@ -133,14 +135,24 @@ Each module in the console corresponds to one or more of these stages — the Ta
 
 | Aspect | Detail |
 |---|---|
-| Format | Single self-contained `index.html` file |
+| Format | Self-contained `index.html`, plus one pre-rendered chart image the Reporting & Analytics module embeds from `analysis/output/charts/` |
 | Dependencies | One Google Fonts import (Fraunces, Inter); no JavaScript frameworks or build tools |
 | Data layer | Plain JavaScript arrays of objects, defined near the end of the file — one array per table or chart |
 | Hosting | Static hosting compatible (GitHub Pages); no backend or database required |
 | Modification | Editing the data arrays changes the displayed content directly; no compilation step |
 | Accessibility | Responsive layout; keyboard-navigable controls; color choices checked for contrast |
 
-This structure was chosen deliberately: a dependency-free file can be opened, reviewed, or shared in any environment without setup, which matters for a tool meant to demonstrate reporting practice rather than to run as production software.
+This structure was chosen deliberately: a near-dependency-free file can be opened, reviewed, or shared in any environment without setup, which matters for a tool meant to demonstrate reporting practice rather than to run as production software.
+
+### 7.1 Python analysis layer
+
+| Aspect | Detail |
+|---|---|
+| Format | `analysis/reporting_analysis.py` — single script, standard library + pandas/matplotlib/openpyxl |
+| What it does | Recomputes the console's KPI rollups, status × priority pivot, and volume-by-function ranking from the same sample data using pandas; flags overdue open items; renders the completion-trend, occupancy, and volume charts with matplotlib; exports a formatted multi-sheet Excel workbook |
+| Why it exists | The HTML page hardcodes its rollups for portability; this script shows the same numbers derived rather than typed, and is the piece of the prototype that maps most directly to the JD's data-analysis and Excel/reporting-automation language |
+| Output | `analysis/output/business_support_report.xlsx` and `analysis/output/charts/*.png` — one chart from this output is embedded directly in the Reporting & Analytics module |
+| Run it | `pip install -r analysis/requirements.txt && python analysis/reporting_analysis.py` |
 
 ---
 
@@ -165,11 +177,17 @@ Where this prototype is honest about its limits: it does not simulate the harder
 
 ## 10. How to Run
 
-1. Download `index.html`
-2. Open it in any modern browser — no installation, server, or internet connection required after the initial font load
+**The console**
+1. Download `index.html` (and the `analysis/output/charts/` folder alongside it, if you want the embedded chart on the Reporting & Analytics page to render)
+2. Open `index.html` in any modern browser — no installation, server, or internet connection required after the initial font load
 3. To modify sample data, edit the arrays defined in the `<script>` section near the bottom of the file
 
 To view the hosted version instead of running it locally, see the GitHub Pages link (https://emmanuelsimbulan.github.io/business-support-console/).
+
+**The Python analysis layer**
+1. `pip install -r analysis/requirements.txt`
+2. `python analysis/reporting_analysis.py`
+3. Review the console summary it prints, and the workbook/charts written to `analysis/output/`
 
 ---
 

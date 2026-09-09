@@ -39,6 +39,14 @@
   }
   h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:500;margin:0;}
   ::selection{background:var(--brass-soft);}
+  code{
+    font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;
+    font-size:0.93em;
+    background:var(--line-soft);
+    padding:1px 5px;
+    border-radius:3px;
+    color:#2B322D;
+  }
 
   .app{display:flex;min-height:100vh;}
 
@@ -225,6 +233,7 @@
     vertical-align:top;
   }
   tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--paper);}
   .badge{
     display:inline-block;
     font-size:11px;
@@ -283,6 +292,28 @@
   .bar-shape.blue{background:linear-gradient(180deg, var(--blue) 0%, #4E6E8C 100%);}
   .bar-col .bar-val{font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink);}
   .bar-col .bar-lbl{font-size:11.5px;color:var(--muted);margin-top:8px;text-align:center;}
+
+  /* ---------- Code block ---------- */
+  .code-block{
+    background:var(--ink);
+    color:#EDEEEC;
+    font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;
+    font-size:11.5px;
+    line-height:1.65;
+    padding:16px 18px;
+    border-radius:var(--radius-md);
+    overflow-x:auto;
+    margin:0;
+    white-space:pre;
+  }
+  .code-block code{background:none;padding:0;border-radius:0;color:inherit;font-size:1em;}
+  .code-block .cm{color:#8A928A;}
+  .code-block .kw{color:#D7A75C;}
+  .code-block .st{color:#9CC2A6;}
+  .py-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:22px;align-items:start;}
+  .py-chart img{width:100%;display:block;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fff;}
+  .py-chart .cap{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;}
+  @media (max-width:780px){ .py-grid{grid-template-columns:1fr;} }
 
   /* ---------- Sparkline ---------- */
   .spark-wrap{padding:6px 0 0;}
@@ -661,6 +692,41 @@
           </div>
           <div class="panel-body" style="padding-top:0;">
             <p style="font-size:12px;color:var(--muted);margin:0;">Built here in HTML for the demo; day to day I'd produce this same cut as an Excel PivotTable for a working review, or a Power BI / Tableau view for a recurring stakeholder dashboard, depending on refresh needs and audience.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Python analysis layer</h3>
+            <span class="meta">analysis/reporting_analysis.py</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:12.5px;color:var(--muted);line-height:1.65;margin:0 0 18px;">
+              The pivot table above and the KPI tiles on Overview are static HTML for this demo. In the repository, a companion pandas script derives the same numbers from the identical task register — a status × priority crosstab, an overdue-item flag, a volume ranking by function — renders the charts with matplotlib, and exports a formatted Excel workbook. It's the reproducible layer behind the page, not a separate toy.
+            </p>
+            <div class="py-grid">
+              <pre class="code-block"><code><span class="kw">def</span> build_status_priority_pivot(tasks: pd.DataFrame) -> pd.DataFrame:
+    pivot = pd.crosstab(tasks[<span class="st">"status"</span>], tasks[<span class="st">"priority"</span>])
+    pivot = pivot.reindex(
+        index=[<span class="st">"Not started"</span>, <span class="st">"In progress"</span>, <span class="st">"Done"</span>],
+        columns=[<span class="st">"Urgent"</span>, <span class="st">"Important"</span>, <span class="st">"Medium"</span>, <span class="st">"Low"</span>],
+        fill_value=<span class="kw">0</span>,
+    )
+    pivot[<span class="st">"Total"</span>] = pivot.sum(axis=<span class="kw">1</span>)
+    pivot.loc[<span class="st">"Total"</span>] = pivot.sum(axis=<span class="kw">0</span>)
+    <span class="kw">return</span> pivot
+
+<span class="cm"># flags open items whose due date has already passed</span>
+<span class="kw">def</span> find_overdue_open_items(tasks, as_of):
+    open_mask = tasks[<span class="st">"status"</span>] != <span class="st">"Done"</span>
+    overdue_mask = tasks[<span class="st">"due"</span>] < as_of
+    <span class="kw">return</span> tasks.loc[open_mask & overdue_mask]</code></pre>
+              <div class="py-chart">
+                <img src="analysis/output/charts/completion_trend.png" alt="On-time completion rate, 8-week trend, rendered by matplotlib">
+                <div class="cap">Rendered by <code>chart_completion_trend()</code> from the same 8-week series as the sparkline above — plus a 4-week rolling average the sparkline doesn't show. The script also renders the task-volume and occupancy charts and writes an Excel workbook (KPI summary, task register, pivot, overdue items, volume ranking, trend) to <code>analysis/output/</code>.</div>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-top:18px;">Run it: <code>pip install -r analysis/requirements.txt && python analysis/reporting_analysis.py</code></p>
           </div>
         </div>
       </section>
